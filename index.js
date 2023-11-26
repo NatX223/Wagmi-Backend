@@ -11,6 +11,9 @@ const { EvmChain } = require("@moralisweb3/common-evm-utils");
 // Import dotenv to use environment variables
 require('dotenv').config();
 
+// initializing the needed LUKSO tools
+const { LSPFactory } = require('@lukso/lsp-factory.js');
+
 // initializing firebase
 const admin = require('firebase-admin');
 const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
