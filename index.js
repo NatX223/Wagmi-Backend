@@ -33,7 +33,7 @@ const storage = multer.memoryStorage();
 const db = getFirestore();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -45,7 +45,7 @@ const startServer = async () => {
       apiKey: apiKey,
     });
   
-    app.listen(port, () => {
+    app.listen(port, "0.0.0.0", () => {
       console.log(`Example app listening on port ${port}`);
     });
 };
