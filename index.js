@@ -437,7 +437,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => { // change to ad
       res.status(404);
       res.json(Response);
     } else {
-      const userDoc = userSnapshot.data();
+      const userDoc = userSnapshot.docs[0].data();
       // get followers
       const followerCount = await db.collection('users').doc(userId).collection('followers').count.get();
       // get following
