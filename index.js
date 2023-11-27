@@ -302,7 +302,7 @@ app.get("/getBoard", async (req, res) => {
   }
 })
 
-app.post("/createProfile", async (req, res) => {
+app.get("/createProfile", async (req, res) => {
   // try to get image url here
 
   // const profileData = {
@@ -330,30 +330,30 @@ app.post("/createProfile", async (req, res) => {
     // await users.doc(docId).set(profileData);
     // await users.doc(docId).collection("followers").add(wagmiFollow);
     // await users.doc(docId).collection("following").add(wagmiFollow);
-    // const lspFactory = new LSPFactory(provider, {
-    //   deployKey: privateKey,
-    //   chainId: 4201,
-    // });
+    const lspFactory = new LSPFactory(provider, {
+      deployKey: privateKey,
+      chainId: 4201,
+    });
 
-    // const deployedContracts = await lspFactory.UniversalProfile.deploy({
-    //   controllerAddresses: [ req.body.address ], // root address (address attached to profile)
-    //   lsp3Profile: {
-    //     name: req.body.username,
-    //     description: req.body.bio,
-    //     tags: ['wagmi-profile'],
-    //     links: [{
-    //       title: 'My Website',
-    //       url: 'www.my-website.com'
-    //     }]
-    //   }
-    // });
+    const deployedContracts = await lspFactory.UniversalProfile.deploy({
+      controllerAddresses: [ req.body.address ], // root address (address attached to profile)
+      lsp3Profile: {
+        name: req.body.username,
+        description: req.body.bio,
+        tags: ['wagmi-profile'],
+        links: [{
+          title: 'My Website',
+          url: 'www.my-website.com'
+        }]
+      }
+    });
 
-    // const UPAddress = deployedContracts.LSP0ERC725Account.address;
+    const UPAddress = deployedContracts.LSP0ERC725Account.address;
     // await users.doc(docId).update({ UPAddress: UPAddress });
 
     console.log('success');
-    const jsonResponse = { status: "successful", username: 'name' };
-    res.status(200).json(req.body);
+    const jsonResponse = { status: "successful", username: req.body, UPAddress: UPAddress };
+    res.status(200).json(jsonResponse);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
