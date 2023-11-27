@@ -460,7 +460,7 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
       const contractAddress = orgBadgeData.contractAddress;
       const id = orgBadgeData.idCount;
       const newId = id + 1;
-      const tokenRef = orgBadgeRef.collection('tokenIds').doc(idCount);
+      const tokenRef = orgBadgeRef.collection('tokenIds').doc(newId);
       await tokenRef.set(req.body);
       await orgBadgeRef.update({ idCount: newId })
       res.status(200).json({ contractAddress: contractAddress, id: id })
