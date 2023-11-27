@@ -335,13 +335,17 @@ app.post("/createProfile", async (req, res) => {
       chainId: 4201,
     });
 
-    const baseAPIURL = 'jdjd'; // initialize this later
-    const profileEndpoint = '/getUPProfile/';
-    const profileLink = baseAPIURL + profileEndpoint + req.body.usernane;
-
     const deployedContracts = await lspFactory.UniversalProfile.deploy({
       controllerAddresses: [ req.body.address ], // root address (address attached to profile)
-      lsp3Profile: profileLink // provision of link to universal profile (provision get endpoint?)
+      lsp3Profile: {
+        name: req.body.username,
+        description: req.body.bio,
+        tags: ['wagmi-profile'],
+        links: [{
+          title: 'My Website',
+          url: 'www.my-website.com'
+        }]
+      }
     });
 
     const UPAddress = deployedContracts.LSP0ERC725Account.address;
