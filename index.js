@@ -306,7 +306,7 @@ app.post("/createProfile", async (req, res) => {
 
   const profileData = {
     displayname: req.body.name,
-    username: req.body.usernane,
+    username: req.body.username,
     bio: req.body.bio,
     profession: req.body.profession,
     X : req.body.xname,
