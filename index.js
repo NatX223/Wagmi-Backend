@@ -424,6 +424,23 @@ app.get("/getUserProfileUsername/:username", async (req, res) => { // change to 
 
 })
 
+app.post("/checkUser/:address", async (req, res) => {
+  const address = req.params.address;  
+  try {
+    const users = db.collection('users');
+    const userSnapshot = await users.where('address', '==', address).get();
+    
+    if (userSnapshot.empty) {
+      res.status(200).json({ exists: false })
+    } else {
+      res.status(200).json({ exists: true })
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message })
+  }
+})
+
 app.get("/getUserProfileAddress/:address", async (req, res) => { // change to add
   const address = req.params.address;  
 
