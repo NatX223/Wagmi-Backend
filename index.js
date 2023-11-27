@@ -431,7 +431,7 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
       const deployedContracts = await lspFactory.LSP8IdentifiableDigitalAsset.deploy({
         name: "WAGMI BADGE",
         symbol: "WBG",
-        controllerAddress: userAddress,
+        controllerAddress: orgAddress,
         tokenIdType: 0,
       //   digitalAssetMetadata: metadataEndpointURL
       });
