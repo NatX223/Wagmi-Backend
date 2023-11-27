@@ -417,7 +417,7 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
     const orgBadgeRef = db.collection('Badges').doc(orgAddress);
     const orgBadgeDoc = await orgBadgeRef.get();
     const users = db.collection('users');
-    const userSnapshot = await users.where('address', '==', address).get();
+    const userSnapshot = await users.where('address', '==', req.body.receiver).get();
     const userId = userSnapshot.docs[0].id;
 
     // does not exist deploy and return
