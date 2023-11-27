@@ -424,7 +424,7 @@ app.get("/getUserProfileUsername/:username", async (req, res) => { // change to 
 
 })
 
-app.post("/checkUser/:address", async (req, res) => {
+app.get("/checkUser/:address", async (req, res) => {
   const address = req.params.address;  
   try {
     const users = db.collection('users');
