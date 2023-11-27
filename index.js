@@ -302,7 +302,7 @@ app.get("/getBoard", async (req, res) => {
   }
 })
 
-app.get("/createProfile", async (req, res) => {
+app.post("/createProfile", async (req, res) => {
   // try to get image url here
 
   // const profileData = {
