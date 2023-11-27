@@ -35,9 +35,13 @@ const db = getFirestore();
 const app = express();
 const port = process.env.PORT || 3000;
 
+const provider = 'https://rpc.testnet.lukso.network';
+
 app.use(express.json());
 
 const apiKey = process.env.MORALIS_API;
+
+const privateKey = process.env.privateKey;
 
 // Add this a startServer function that initialises Moralis
 const startServer = async () => {
@@ -311,7 +315,7 @@ app.post("/createProfile", async (req, res) => {
     telegram: req.body.telegramname,
     youtube: req.body.youtubename,
     imageURL: req.body.imageURL,
-    add: req.body.address,
+    address: req.body.address,
     accountType: req.body.accountType,
     UPAddress: '0x'
   }
@@ -326,7 +330,8 @@ app.post("/createProfile", async (req, res) => {
     await users.doc(docId).set(profileData);
     await users.doc(docId).collection("followers").add(wagmiFollow);
     await users.doc(docId).collection("following").add(wagmiFollow);
-    const lspFactory = new LSPFactory(ethereum, {
+    const lspFactory = new LSPFactory(provider, {
+      deployKey: privateKey,
       chainId: 4201,
     });
 
