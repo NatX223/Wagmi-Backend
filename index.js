@@ -439,9 +439,11 @@ app.get("/getUserProfileAddress/:address", async (req, res) => { // change to ad
     } else {
       const userDoc = userSnapshot.docs[0].data();
       // get followers
-      const followerCount = await db.collection('users').doc(userId).collection('followers').count.get();
+      const _followerCount = await db.collection('users').doc(userId).collection('followers').get();
+      const followerCount = _followerCount.size;
       // get following
-      const followingCount = await db.collection('users').doc(userId).collection('following').count.get();
+      const _followingCount = await db.collection('users').doc(userId).collection('following').get();
+      const followingCount = _followingCount.size;
       // get 5 badges
       const badgeList = await db.collection('users').doc(userId).collection('badges').orderBy('Title').limit(5).get();
       if (badgeList.empty) {
