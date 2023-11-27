@@ -352,7 +352,7 @@ app.post("/createProfile", async (req, res) => {
     // await users.doc(docId).update({ UPAddress: UPAddress });
 
     console.log('success');
-    const jsonResponse = { status: "successful", username: req.body, UPAddress: UPAddress };
+    const jsonResponse = { status: "successful", username: req.body };
     res.status(200).json(jsonResponse);
   } catch (error) {
     console.error(error);
