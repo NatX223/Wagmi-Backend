@@ -177,7 +177,7 @@ app.get("/getEligible/:contractAddress", async (req, res) => {
       const questersRef = db.collection('medals').doc(contractAddress).collection('tokenIds').doc(tokenId).collection('questers');
       const questerssnapshot = await questersRef.get();
       questerssnapshot.forEach(doc => {
-        const userObj = {address: doc.data().address, index: doc.data().index}
+        const userObj = {address: doc.data().address, index: doc.data().index, id: doc.id}
         if (doc.data().claimed == false) {
           questers.push(userObj);
         }
@@ -205,9 +205,14 @@ app.get("/getEligible/:contractAddress", async (req, res) => {
         }
         
       }
-      const index = Math.min(...indecies)
-      // const response = { index: index };
-      res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
+      const index = Math.min(...indecies);
+      const foundObject = questers.find(item => item.index === index);
+      const id = foundObject.id;
+      const qref = questersRef.doc(id);
+      await qref.update({claimed: true});
+      const response = { index: index };
+      res.status(200).json(response)
+      // res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
     } catch (error) {
       // Handle errors
       console.error(error);
@@ -830,20 +835,3 @@ const sumDonationAmount = (data, doneeAddress) => {
 
 // Call startServer()
 startServer();
-
-// TODO
-// 1. include user type(organization) ✅
-// 2. create followers subcollection when creating user ✅
-// 3. create follow and unfollow function ✅
-// 4. return No. of followers in returned user object
-// 5. work on uploading file to cloudstorage ⌛
-// 6. checking if address or email is in list
-// 7. reading more about LSPs contract
-// 8. start rewriting contract with LUKSO standard(LSPs)
-// 9. create badge function
-// 10. org name -- doc ref
-// 11. sub-docs -- tokenIds
-
-// new TODO
-// 1. create post endpoint to return UP profile endpoint
-// 2. create response.json with {link: up profile endpoint} for create profile endpoint
