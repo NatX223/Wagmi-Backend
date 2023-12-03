@@ -158,19 +158,56 @@ app.post("/uploadImage", async (req, res) => {
   });
 });
 
-app.get("/getNFTAmount", async (req, res) => {
-    // get the userAddress, chain and contractAddress from the requset/query
-    const userAddress = req.query.userAddress; // user address
-    const nftName = req.query.nftName; // nft name
-    const chain = req.query.chain; // chain to check on
+app.get("/getEligible/:contractAddress", async (req, res) => {
+    // get the chain and contractAddress from the requset/query
+    const contractAddress = req.params.contractAddress
+    const tokenId = req.query.tokenId;
+    //get the needed params - useraddress, chain, nftname/contract address, requirement
+    const medalRef = await db.collection('medals').doc(contractAddress).collection('tokenIds').doc(tokenId).get();
+    const medalDoc = medalRef.data();
+    const name = medalDoc.contractAddress;
+    const chain = medalDoc.chain;
+    const type = medalDoc.type;
+    const requirement = medalDoc.requirement;
+    let indecies = [];
+    let questers = [];
 
     try {
-      // Get and return the crypto data
-      const data = await getCollectionAmount(userAddress, chain, nftName);
-      const jsonResponse = { RESULT: data };
-      res.json(jsonResponse);
-      res.status(200);
-      res.json(jsonResponse);
+      // get all questers
+      const questersRef = db.collection('medals').doc(contractAddress).collection('tokenIds').doc(tokenId).collection('questers');
+      const questerssnapshot = await questersRef.get();
+      questerssnapshot.forEach(doc => {
+        const userObj = {address: doc.data().address, index: doc.data().index}
+        if (doc.data().claimed == false) {
+          questers.push(userObj);
+        }
+      });
+      // loop through all questers and check if the are eligible
+      for (let i = 0; i < questers.length; i++) {
+        const address = questers[i].address;
+        var userAmount;
+        switch (type) {
+          case 0:
+            userAmount = await getCollectionAmount(address, chain, name);
+            if (userAmount >= requirement) {
+              indecies.push(questers[i].index)
+            }
+            break;
+            case 0:
+              userAmount = await getDonationAmount(address, chain, name);
+              if (userAmount >= requirement) {
+                indecies.push(questers[i].index)
+              }
+              break;
+        
+          default:
+            break;
+        }
+        
+      }
+      const index = Math.min(...indecies)
+      // const response = { index: index };
+      res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
     } catch (error) {
       // Handle errors
       console.error(error);
@@ -201,7 +238,7 @@ const getCollectionAmount = async (address, _chain, nftName) => {
   try {
   const response = await Moralis.EvmApi.nft.getWalletNFTs({
       address,
-      chain,
+      chain
   });
 
   const amount = sumAmountByName(response.raw.result, nftName);
