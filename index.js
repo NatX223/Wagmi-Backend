@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 
@@ -85,6 +86,12 @@ const LSP8ABI = [
       "type": "function"
     }
 ]
+
+// Enable CORS for any origin
+app.use(cors({
+  origin: '*', // Allow requests from any origin
+  credentials: true, // Include if you're using credentials (e.g., cookies, authorization headers)
+}));
 
 app.use(express.json());
 
@@ -406,8 +413,7 @@ app.post("/createProfile", async (req, res) => {
     youtube: req.body.youtubename,
     imageURL: req.body.imageURL,
     address: req.body.address,
-    accountType: req.body.accountType,
-    // UPAddress: '0x'
+    accountType: req.body.accountType
   }
 
   const wagmiFollow = {
@@ -420,26 +426,6 @@ app.post("/createProfile", async (req, res) => {
     await users.doc(docId).set(profileData);
     await users.doc(docId).collection("followers").add(wagmiFollow);
     await users.doc(docId).collection("following").add(wagmiFollow);
-    // const lspFactory = new LSPFactory(provider, {
-    //   deployKey: privateKey,
-    //   chainId: 4201,
-    // });
-
-    // const deployedContracts = await lspFactory.UniversalProfile.deploy({
-    //   controllerAddresses: [ req.body.address ], // root address (address attached to profile)
-    //   lsp3Profile: {
-    //     name: req.body.username,
-    //     description: req.body.bio,
-    //     tags: ['wagmi-profile'],
-    //     links: [{
-    //       title: 'My Website',
-    //       url: 'www.my-website.com'
-    //     }]
-    //   }
-    // });
-
-    // const UPAddress = deployedContracts.LSP0ERC725Account.address;
-    // await users.doc(docId).update({ UPAddress: UPAddress });
 
     console.log('success');
     const jsonResponse = { status: "successful" };
@@ -475,7 +461,6 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
         symbol: "WBG",
         controllerAddress: orgAddress,
         tokenIdType: 0,
-      //   digitalAssetMetadata: metadataEndpointURL
       });
       const contractAddress = deployedContracts.LSP8IdentifiableDigitalAsset.address;
 
