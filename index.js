@@ -199,7 +199,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
               indecies.push(questers[i].index)
             }
             break;
-            case 0:
+            case 0: 
               userAmount = await getDonationAmount(address, chain, name);
               if (userAmount >= requirement) {
                 indecies.push(questers[i].index)
