@@ -211,8 +211,9 @@ app.get("/getEligible/:tokenId", async (req, res) => {
         }
         
       }
-      const index = Math.min(...indecies);
-      const foundObject = questers.find(item => item.index === index);
+      const _index = Math.min(...indecies);
+      const index = _index.toString();
+      const foundObject = questers.find(item => item.index === _index);
       const id = foundObject.id;
       const qref = questersRef.doc(id);
       await qref.update({claimed: true});
