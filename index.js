@@ -169,7 +169,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
     // get the chain and contractAddress from the requset/query
     const tokenId = req.params.tokenId;
     //get the needed params - useraddress, chain, nftname/contract address, requirement
-    const medalRef = await db.collection('medals').doc("0x").collection('tokenIds').doc(tokenId).get();
+    const medalRef = await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).get();
     const medalDoc = medalRef.data();
     const name = medalDoc.contractAddress;
     const chain = medalDoc.chain;
@@ -180,7 +180,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
 
     try {
       // get all questers
-      const questersRef = db.collection('medals').doc("0x").collection('tokenIds').doc(tokenId).collection('questers');
+      const questersRef = db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).collection('questers');
       const questerssnapshot = await questersRef.get();
       questerssnapshot.forEach(doc => {
         const userObj = {address: doc.data().address, index: doc.data().index, id: doc.id}
