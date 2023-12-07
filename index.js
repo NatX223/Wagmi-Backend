@@ -34,7 +34,7 @@ const storage = multer.memoryStorage();
 const db = getFirestore();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3300;
 
 // LUKSO provider
 const provider = 'https://rpc.testnet.lukso.network';
