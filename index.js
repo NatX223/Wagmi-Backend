@@ -116,7 +116,7 @@ app.get("/", (req, res) => {
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 1000000 },
+  limits: { fileSize: 10000000 },
 }).single('file');
 
 app.post("/uploadImage", async (req, res) => {
@@ -147,15 +147,12 @@ app.post("/uploadImage", async (req, res) => {
           });
 
           fileStream.on('finish', () => {
-            fileURL = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            fileURL = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${fileName}?alt=media`;
             console.log('File uploaded to Firebase. Download URL:', fileURL);
-            res.status(200).json({ response: 'File uploaded successfully', downloadUrl: fileURL });
+            res.status(200).json({ response: 'File uploaded successfully', url: fileURL });
           });
 
           fileStream.end(file.buffer);
-
-          // push fileURL to firestore
-          res.status(200).json({ url: fileURL });
         } catch (error) {
           console.error('Error uploading file:', error);
           res.status(500).json({ error: 'Error uploading file' });
@@ -462,6 +459,7 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
         controllerAddress: orgAddress,
         tokenIdType: 0,
       });
+
       const contractAddress = deployedContracts.LSP8IdentifiableDigitalAsset.address;
 
       // change owner
@@ -492,6 +490,21 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
       await orgBadgeRef.update({ idCount: newId })
       res.status(200).json({ contractAddress: contractAddress, id: id })
   }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error })
+  }
+})
+
+app.post("/mintBadge", async (req, res) => {
+
+  try {
+    // increment the counter
+    const badgeRef = db.collection('badges');
+    
+    await badgeRef.add(req.body);
+
+    res.status(200).json({ response: "successful"});
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error })
