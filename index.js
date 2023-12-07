@@ -403,17 +403,17 @@ app.get("/getBoard", async (req, res) => {
 app.post("/createProfile", async (req, res) => {
 
   const profileData = {
-    displayname: req.body.name,
-    username: req.body.username,
-    bio: req.body.bio,
-    profession: req.body.profession,
-    X : req.body.xname,
-    discord: req.body.discordname,
-    telegram: req.body.telegramname,
-    youtube: req.body.youtubename,
-    imageURL: req.body.imageURL,
+    account: req.body.account,
     address: req.body.address,
-    accountType: req.body.accountType
+    bio: req.body.bio,
+    discord: req.body.discord,
+    name: req.body.name,
+    occupation: req.body.occupation,
+    telegram: req.body.telegram,
+    username: req.body.username,
+    website: req.body.website,
+    X : req.body.xDotCom,
+    youtube: req.body.youtube
   }
 
   const wagmiFollow = {
@@ -530,7 +530,6 @@ app.get("/getUserProfileUsername/:username", async (req, res) => { // change to 
   // add extended params to returned value
 
 })
-
 
 app.get("/getUserProfileAddress/:address", async (req, res) => { // change to add
   const address = req.params.address;  
