@@ -511,6 +511,21 @@ app.post("/mintBadge", async (req, res) => {
   }
 })
 
+app.post("/createMedal", async (req, res) => {
+
+  try {
+    // increment the counter
+    const medalRef = db.collection('medals');
+    
+    await medalRef.add(req.body);
+
+    res.status(200).json({ response: "successful"});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error })
+  }
+})
+
 app.get("/getUserProfileUsername/:username", async (req, res) => { // change to add
   const username = req.params.username;
 
