@@ -171,7 +171,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
     const name = medalDoc.contractAddress;
     const chain = medalDoc.chain;
     const type = medalDoc.type;
-    const requirement = medalDoc.requirement;
+    const requirement = medalDoc.requirement; 
     let indecies = [];
     let questers = [];
 
