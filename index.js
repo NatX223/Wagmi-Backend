@@ -209,12 +209,12 @@ app.get("/getEligible/:tokenId", async (req, res) => {
         
       }
       const _index = Math.min(...indecies);
-      const index = _index.toString();
+      // const index = _index.toString();
       const foundObject = questers.find(item => item.index === _index);
       const id = foundObject.id;
       const qref = questersRef.doc(id);
       await qref.update({claimed: true});
-      const response = { index: index };
+      const response = { index: _index };
       res.status(200).json(response)
       // res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
     } catch (error) {
