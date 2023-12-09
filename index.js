@@ -496,6 +496,8 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
   }
 })
 
+// update later
+// to include latest tokenId
 app.post("/mintBadge", async (req, res) => {
 
   try {
@@ -511,6 +513,8 @@ app.post("/mintBadge", async (req, res) => {
   }
 })
 
+// update later
+// to include latest tokenId
 app.post("/createMedal", async (req, res) => {
 
   try {
@@ -518,6 +522,34 @@ app.post("/createMedal", async (req, res) => {
     const medalRef = db.collection('medals');
     
     await medalRef.add(req.body);
+
+    res.status(200).json({ response: "successful"});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error })
+  }
+})
+
+app.post("/participate/:tokenId", async (req, res) => {
+  const address = req.body.address;
+  const tokenId = req.params.tokenId;
+
+  try {
+    const indexRef = await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).get();
+    const index = indexRef.data().index;
+    const newIndex = index + 1;
+
+    const questerObj = {
+      address: address,
+      claimed: false,
+      index: index
+    }
+
+    // increment the counter
+    const questerRef = db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).collection('questers');
+    
+    await questerRef.add(questerObj);
+    await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).update({ index: newIndex });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
