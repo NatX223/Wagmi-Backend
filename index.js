@@ -185,6 +185,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
           questers.push(userObj);
         }
       });
+      console.log('questers', questers);
       // loop through all questers and check if the are eligible
       for (let i = 0; i < questers.length; i++) {
         const address = questers[i].address;
@@ -209,6 +210,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
         
       }
       const _index = Math.min(...indecies);
+      console.log('index', _index);
       // const index = _index.toString();
       const foundObject = questers.find(item => item.index === _index);
       const id = foundObject.id;
@@ -265,11 +267,16 @@ const getCollectionAmount = async (address, _chain, nftAddress) => {
 
 const sumAmountByAddress = (data, address) => {
   // Filter the array to include only objects with the specified 'name'
-  const filteredData = data.filter((item) => item.token_address === address);
+  console.log('data', data);
+  const add = Number(address);
+  const filteredData = data.filter((item) => item.token_address == add);
+  console.log('address', add);
+  console.log('filtered data', filteredData);
 
   // Sum the 'amount' values in the filtered array
   const sum = filteredData.reduce((total, item) => total + Number(item.amount), 0);
 
+  console.log('sum', sum);
   return sum;
 }
 
