@@ -230,17 +230,20 @@ const getCollectionAmount = async (address, _chain, nftAddress) => {
   // const address = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
   var chain;
   switch (_chain) {
-      case "Polygon":
-          chain = EvmChain.POLYGON;
+      case "Lukso":
+          chain = EvmChain.MUMBAI;
           break;
-      case "BSC":
-          chain = EvmChain.BSC;
+      case "Eth Sepolia":
+          chain = EvmChain.SEPOLIA;
           break;
-      case "Arbitrum":
-          chain = EvmChain.ARBITRUM;
+      case "Polygon Mumbai":
+          chain = EvmChain.MUMBAI;
+          break;
+      case "BSC Testnet":
+          chain = EvmChain.BSC_TESTNET;
           break;
       default:
-          chain = EvmChain.ETHEREUM;
+          chain = EvmChain.MUMBAI;
   }
 
   // check moralis API on how to get the name of an NFT collection fromt the contract address
@@ -500,13 +503,14 @@ app.post("/mintBadge", async (req, res) => {
 
   try {
     const badgeRef = db.collection('badges');
+    const badgeDetailRef = db.collection('badgeDetails');
 
-    const _count = await badgeRef.doc('details').get();
+    const _count = await badgeDetailRef.doc('details').get();
     const count = _count.data().count;
     const newCount = count + 1;
 
     await badgeRef.doc(`${count}`).set(req.body);
-    await badgeRef.doc('details').update({ count: newCount });
+    await badgeDetailRef.doc('details').update({ count: newCount });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
@@ -520,12 +524,14 @@ app.post("/createMedal", async (req, res) => {
   try {
     
     const medalRef = db.collection('medals');
-    const _count = await medalRef.doc('details').get();
+    const medalDetailRef = db.collection('medalDetails');
+    
+    const _count = await medalDetailRef.doc('details').get();
     const count = _count.data().count;
     const newCount = count + 1;
     
     await medalRef.doc(`${count}`).set(req.body);
-    await medalRef.doc('details').update({ count: newCount });
+    await medalDetailRef.doc('details').update({ count: newCount });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
