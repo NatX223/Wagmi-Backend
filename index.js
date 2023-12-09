@@ -525,7 +525,7 @@ app.post("/createMedal", async (req, res) => {
     
     const medalRef = db.collection('medals');
     const medalDetailRef = db.collection('medalDetails');
-    
+
     const _count = await medalDetailRef.doc('details').get();
     const count = _count.data().count;
     const newCount = count + 1;
@@ -688,12 +688,13 @@ app.get("/getAllMedals", async (req, res) => {
     const medalsCount = allMedals.size;
 
     for (let i = 0; i < medalsCount; i++) {
-      const medal = await medals.doc(i).get();
+      const medal = await medals.doc(`${i}`).get();
       const title = medal.data().title;
       const image = medal.data().image;
       const type = medal.data().alphaType;
       const id = i;
-      const creator = getCreator(medal.data().creator);
+      const _creator = medal.data().creator;
+      const creator = await getCreator(_creator);
       const description = `This is a badge for ${creator}`;
 
       const medalDetails = {};
@@ -711,6 +712,7 @@ app.get("/getAllMedals", async (req, res) => {
     res.json(medalArray);
   
   } catch (error) {
+    console.log(error);
     res.status(500);
     res.json({ error: error.message });
   }
