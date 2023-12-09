@@ -166,7 +166,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
     // get the chain and contractAddress from the requset/query
     const tokenId = req.params.tokenId;
     //get the needed params - useraddress, chain, nftname/contract address, requirement
-    const medalRef = await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).get();
+    const medalRef = await db.collection('medals').doc(tokenId).get();
     const medalDoc = medalRef.data();
     const contractAddress = medalDoc.contractAddress;
     const chain = medalDoc.chain;
@@ -177,7 +177,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
 
     try {
       // get all questers
-      const questersRef = db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).collection('questers');
+      const questersRef = db.collection('medals').doc(tokenId).collection('questers');
       const questerssnapshot = await questersRef.get();
       questerssnapshot.forEach(doc => {
         const userObj = {address: doc.data().address, index: doc.data().index, id: doc.id}
@@ -561,7 +561,7 @@ app.post("/participate/:tokenId", async (req, res) => {
   }
 })
 
-app.get("/getUserProfileUsername/:username", async (req, res) => { // change to add
+app.get("/getUserProfileUsername/:username", async (req, res) => {
   const username = req.params.username;
 
   const userSnapshot = await db.collection('users').doc(username).get();
@@ -594,7 +594,7 @@ app.get("/getUserProfileUsername/:username", async (req, res) => { // change to 
 
 })
 
-app.get("/getUserProfileAddress/:address", async (req, res) => { // change to add
+app.get("/getUserProfileAddress/:address", async (req, res) => {
   const address = req.params.address;  
 
   try {
@@ -615,7 +615,8 @@ app.get("/getUserProfileAddress/:address", async (req, res) => { // change to ad
       const _followingCount = await db.collection('users').doc(userId).collection('following').get();
       const followingCount = _followingCount.size;
       // get 5 badges
-      const badgeList = await db.collection('users').doc(userId).collection('badges').orderBy('Title').limit(5).get();
+
+      const badgeList = await db.collection('users').doc(userId).collection('badges').orderBy('title').limit(5).get();
       if (badgeList.empty) {
         const userResponse = {
           name: userDoc.displayname,
@@ -653,6 +654,56 @@ app.get("/getUserProfileAddress/:address", async (req, res) => { // change to ad
       res.status(200);
       res.json(userResponse);
     }
+  } catch (error) {
+    res.status(500);
+    res.json({ error: error.message });
+  }
+
+  // add extended params to returned value
+
+})
+
+const getCreator = async(address) => {
+  const users = db.collection('users');
+  const userSnapshot = await users.where('address', '==', address).get();
+
+  const userDoc = userSnapshot.docs[0].data();
+  const username = userDoc.username;
+
+  return username;
+}
+
+app.get("/getAllMedals", async (req, res) => {  
+
+  try {
+    const medals = db.collection('medals');
+    const allMedals = await medals.get();
+    const medalArray = [];
+    const medalsCount = allMedals.size;
+
+    for (let i = 0; i < medalsCount; i++) {
+      const medal = await medals.doc(i).get();
+      const title = medal.data().title;
+      const image = medal.data().image;
+      const type = medal.data().alphaType;
+      const id = i;
+      const creator = getCreator(medal.data().creator);
+      const description = `This is a badge for ${creator}`;
+
+      const medalDetails = {};
+      medalDetails.title = title;
+      medalDetails.image = image;
+      medalDetails.type = type;
+      medalDetails.creator = creator;
+      medalDetails.id = id;
+      medalDetails.description = description;
+
+      medalArray.push(medalDetails);
+    }
+
+    res.status(200);
+    res.json(medalArray);
+  
   } catch (error) {
     res.status(500);
     res.json({ error: error.message });
