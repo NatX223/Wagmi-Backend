@@ -168,7 +168,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
     //get the needed params - useraddress, chain, nftname/contract address, requirement
     const medalRef = await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).get();
     const medalDoc = medalRef.data();
-    const name = medalDoc.contractAddress;
+    const contractAddress = medalDoc.contractAddress;
     const chain = medalDoc.chain;
     const type = medalDoc.type;
     const requirement = medalDoc.requirement; 
@@ -191,13 +191,13 @@ app.get("/getEligible/:tokenId", async (req, res) => {
         var userAmount;
         switch (type) {
           case 0:
-            userAmount = await getCollectionAmount(address, chain, name);
+            userAmount = await getCollectionAmount(address, chain, contractAddress);
             if (userAmount >= requirement) {
               indecies.push(questers[i].index)
             }
             break;
-            case 0: 
-              userAmount = await getDonationAmount(address, chain, name);
+            case 1:
+              userAmount = await getDonationAmount(address, chain, contractAddress);
               if (userAmount >= requirement) {
                 indecies.push(questers[i].index)
               }
@@ -226,7 +226,7 @@ app.get("/getEligible/:tokenId", async (req, res) => {
 });
 
 // function to get the amount of NFTs of a collection an account has
-const getCollectionAmount = async (address, _chain, nftName) => {
+const getCollectionAmount = async (address, _chain, nftAddress) => {
   // const address = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
   var chain;
   switch (_chain) {
@@ -250,7 +250,7 @@ const getCollectionAmount = async (address, _chain, nftName) => {
       chain
   });
 
-  const amount = sumAmountByName(response.raw.result, nftName);
+  const amount = sumAmountByAddress(response.raw.result, nftAddress);
   console.log(amount);
   return amount;
 
@@ -260,9 +260,9 @@ const getCollectionAmount = async (address, _chain, nftName) => {
   }
 }
 
-const sumAmountByName = (data, name) => {
+const sumAmountByAddress = (data, address) => {
   // Filter the array to include only objects with the specified 'name'
-  const filteredData = data.filter((item) => item.name === name);
+  const filteredData = data.filter((item) => item.token_address === address);
 
   // Sum the 'amount' values in the filtered array
   const sum = filteredData.reduce((total, item) => total + Number(item.amount), 0);
