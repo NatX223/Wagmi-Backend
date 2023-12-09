@@ -496,15 +496,17 @@ app.post("/createBadge/:orgAddress", async (req, res) => {
   }
 })
 
-// update later
-// to include latest tokenId
 app.post("/mintBadge", async (req, res) => {
 
   try {
-    // increment the counter
     const badgeRef = db.collection('badges');
-    
-    await badgeRef.add(req.body);
+
+    const _count = await badgeRef.doc('details').get();
+    const count = _count.data().count;
+    const newCount = count + 1;
+
+    await badgeRef.doc(`${count}`).set(req.body);
+    await badgeRef.doc('details').update({ count: newCount });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
@@ -513,20 +515,22 @@ app.post("/mintBadge", async (req, res) => {
   }
 })
 
-// update later
-// to include latest tokenId
 app.post("/createMedal", async (req, res) => {
 
   try {
-    // increment the counter
-    const medalRef = db.collection('medals');
     
-    await medalRef.add(req.body);
+    const medalRef = db.collection('medals');
+    const _count = await medalRef.doc('details').get();
+    const count = _count.data().count;
+    const newCount = count + 1;
+    
+    await medalRef.doc(`${count}`).set(req.body);
+    await medalRef.doc('details').update({ count: newCount });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error })
+    res.status(500).json({ error: error });
   }
 })
 
@@ -535,7 +539,7 @@ app.post("/participate/:tokenId", async (req, res) => {
   const tokenId = req.params.tokenId;
 
   try {
-    const indexRef = await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).get();
+    const indexRef = await db.collection('medals').doc(tokenId).get();
     const index = indexRef.data().index;
     const newIndex = index + 1;
 
@@ -545,11 +549,10 @@ app.post("/participate/:tokenId", async (req, res) => {
       index: index
     }
 
-    // increment the counter
-    const questerRef = db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).collection('questers');
+    const questerRef = db.collection('medals').doc(tokenId).collection('questers');
     
     await questerRef.add(questerObj);
-    await db.collection('medals').doc('0x').collection('tokenIds').doc(tokenId).update({ index: newIndex });
+    await db.collection('medals').doc(tokenId).update({ index: newIndex });
 
     res.status(200).json({ response: "successful"});
   } catch (error) {
