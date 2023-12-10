@@ -214,8 +214,12 @@ app.get("/getEligible/:tokenId", async (req, res) => {
       // const index = _index.toString();
       const foundObject = questers.find(item => item.index === _index);
       const id = foundObject.id;
+      const userAddress = foundObject.address;
       const qref = questersRef.doc(id);
       await qref.update({claimed: true});
+      // const _minters = db.collection('medals').doc(tokenId).get();
+      // const minters = await _minters.data().minters;
+      await db.collection('medals').doc(tokenId).update({ minters: FieldValue.arrayUnion(userAddress) })
       const response = { index: _index };
       res.status(200).json(response)
       // res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
