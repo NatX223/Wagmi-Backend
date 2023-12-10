@@ -627,47 +627,95 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
       // get following
       const _followingCount = await db.collection('users').doc(userId).collection('following').get();
       const followingCount = _followingCount.size;
-      // get 5 badges
 
-      const badgeList = await db.collection('users').doc(userId).collection('badges').orderBy('title').limit(5).get();
-      if (badgeList.empty) {
-        const userResponse = {
-          name: userDoc.displayname,
-          username: userDoc.username,
-          bio: userDoc.bio,
-          profession: userDoc.profession,
-          imageURL: userDoc.imageURL,
-          followers: followerCount,
-          following: followingCount
+      // get 4 badges
+      const badgeList = await db.collection('badges').where('receiver', '==', address).limit(4).get();
+      const badges = [
+        {
+          id: '',
+          value: {
+            image: '',
+            verified: false,
+            name: ''
+          }
         }
-        
-        res.status(200);
-        res.json(userResponse);
-      }
-      const _badgeList = [];
+      ]
 
-      for (let i = 0; i < badgeList.docs.length; i++) {
-        const title = badgeList.docs[i].data().Title;
-        const imageURL = badgeList.docs[i].data().imageURL;
-        const badgeObj = {title: title, imageURL: imageURL};
-        _badgeList.push(badgeObj)
-      }
+      const medalIds = [];
+      const medalsSnanpshot = await db.collection('medals').get();
+      medalsSnanpshot.forEach(doc => {
+        const mintersArray = doc.data().minters;
+        console.log(mintersArray);
+        // if (mintersArray.includes(address))
+          medalIds.push(doc.id);
+      })
 
-      const userResponse = {
+      console.log(medalIds);
+
+      const medals = [
+        {
+          id: '',
+          value: {
+            title: '',
+            host: '',
+            type: '',
+            image: ''
+          }
+        }
+      ]
+
+      const bio = {
         name: userDoc.displayname,
         username: userDoc.username,
         bio: userDoc.bio,
         profession: userDoc.profession,
-        imageURL: userDoc.imageURL,
+        // imageURL: userDoc.imageURL,
         followers: followerCount,
-        following: followingCount,
-        badges: _badgeList
+        following: followingCount
+      }
+
+      for (let i = 0; i < badgeList.docs.length; i++) {
+        const title = badgeList.docs[i].data().title;
+        const imageURL = badgeList.docs[i].data().image;
+        const badgeObj = {
+          id: i,
+          value: {
+            image: imageURL,
+            verified: true,
+            name: title
+          }
+        };
+        badges.push(badgeObj)
+      }
+
+      for (let i = 0; i < medalIds.length; i++) {
+        const id = Number(medalIds[i]);
+        const medalSnapshot = await db.collection('medals').doc(`${id}`).get();
+        const medalObj = {
+          id: id,
+          value: {
+            title: medalSnapshot.data().title,
+            host: 'host',
+            type: medalSnapshot.data().alphaType,
+            image: medalSnapshot.data().image
+          }
+        }
+
+        medals.push(medalObj);
+        
+      }
+
+      const userResponse = {
+        bio: bio,
+        badges: badges,
+        medals: medals
       }
       
       res.status(200);
       res.json(userResponse);
     }
   } catch (error) {
+    console.log(error);
     res.status(500);
     res.json({ error: error.message });
   }
