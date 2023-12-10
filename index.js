@@ -672,7 +672,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
         name: userDoc.name,
         username: userDoc.username,
         bio: userDoc.bio,
-        profession: userDoc.profession,
+        profession: userDoc.occupation,
         // imageURL: userDoc.imageURL,
         followers: followerCount,
         following: followingCount
