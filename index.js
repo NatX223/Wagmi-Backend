@@ -646,7 +646,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
       medalsSnanpshot.forEach(doc => {
         const mintersArray = doc.data().minters;
         console.log(mintersArray);
-        // if (mintersArray.includes(address))
+        if (mintersArray.includes(address))
           medalIds.push(doc.id);
       })
 
