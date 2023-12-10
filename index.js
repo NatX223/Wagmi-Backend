@@ -669,7 +669,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
       ]
 
       const bio = {
-        name: userDoc.displayname,
+        name: userDoc.name,
         username: userDoc.username,
         bio: userDoc.bio,
         profession: userDoc.profession,
