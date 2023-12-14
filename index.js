@@ -768,7 +768,7 @@ app.get("/getAllMedals", async (req, res) => {
         remaining: medal.data().remaining
       }
 
-      value.participants = getParticipants(i);
+      value.participants = await getParticipants(i);
 
       medalDetails.id = id;
       medalDetails.value = value;
@@ -793,7 +793,7 @@ const getParticipants = async(id) => {
   const participants = [];
   try {
   // get medal ref
-  const medalRef = db.collection('medals').doc(id);
+  const medalRef = db.collection('medals').doc(`${id}`);
   // get questers ref
   const questersSnapshot = await medalRef.collection('questers').get();
   if (questersSnapshot.empty) {
