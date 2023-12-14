@@ -40,7 +40,7 @@ const port = process.env.PORT || 3300;
 const provider = 'https://rpc.testnet.lukso.network';
 
 // ethers
-const { Wallet, ethers } = require("ethers");
+const { Wallet, ethers, getAddress } = require("ethers");
 
 // initializing the LSP8 contract ABI
 const LSP8ABI = [
@@ -612,7 +612,7 @@ app.get("/getUserProfileUsername/:username", async (req, res) => {
 })
 
 app.get("/getUserProfileAddress/:address", async (req, res) => {
-  const address = req.params.address;  
+  const address = req.params.address;
 
   try {
     const users = db.collection('users');
@@ -634,16 +634,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
 
       // get 4 badges
       const badgeList = await db.collection('badges').where('receiver', '==', address).limit(4).get();
-      const badges = [
-        {
-          id: '',
-          value: {
-            image: '',
-            verified: false,
-            name: ''
-          }
-        }
-      ]
+      const badges = []
 
       const medalIds = [];
       const medalsSnanpshot = await db.collection('medals').get();
@@ -656,17 +647,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
 
       console.log(medalIds);
 
-      const medals = [
-        {
-          id: '',
-          value: {
-            title: '',
-            host: '',
-            type: '',
-            image: ''
-          }
-        }
-      ]
+      const medals = []
 
       const bio = {
         name: userDoc.name,
@@ -675,7 +656,11 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
         profession: userDoc.occupation,
         // imageURL: userDoc.imageURL,
         followers: followerCount,
-        following: followingCount
+        following: followingCount,
+        discord: userDoc.discord,
+        x: userDoc.X,
+        telegram: userDoc.telegram,
+        website: userDoc.website
       }
 
       for (let i = 0; i < badgeList.docs.length; i++) {
@@ -686,8 +671,18 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
           value: {
             image: imageURL,
             verified: true,
-            name: title
-          }
+            name: title,
+            headImg: badgeList.docs[i].data().image,
+            created: await getCreator(badgeList.docs[i].data().minter),
+            transacId: "0x", // store transaction id
+            desc: badgeList.docs[i].data().description,
+            time: {
+              start: badgeList.docs[i].data().startDate,
+              end: badgeList.docs[i].data().endDate
+            },
+            validator: badgeList.docs[i].data().validator,
+            rating: badgeList.docs[i].data().rating
+          },
         };
         badges.push(badgeObj)
       }
@@ -699,7 +694,7 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
           id: id,
           value: {
             title: medalSnapshot.data().title,
-            host: 'host',
+            host: await getCreator(medalSnapshot.data().creator),
             type: medalSnapshot.data().alphaType,
             image: medalSnapshot.data().image
           }
@@ -757,12 +752,26 @@ app.get("/getAllMedals", async (req, res) => {
       const description = `This is a badge for ${creator}`;
 
       const medalDetails = {};
-      medalDetails.title = title;
-      medalDetails.image = image;
-      medalDetails.type = type;
-      medalDetails.creator = creator;
+      const value = {}
+      value.title = title;
+      value.host = creator;
+      value.metrics = type;
+      value.hostImage = image;
+      value.medalImage = image;
+      value.description = description;
+      value.time = {
+        start: medal.data().startDate,
+        end: medal.data().endDate
+      };
+      value.quantity = {
+        total: medal.data().total,
+        remaining: medal.data().remaining
+      }
+
+      value.participants = getParticipants(i);
+
       medalDetails.id = id;
-      medalDetails.description = description;
+      medalDetails.value = value;
 
       medalArray.push(medalDetails);
     }
@@ -780,8 +789,32 @@ app.get("/getAllMedals", async (req, res) => {
 
 })
 
+const getParticipants = async(id) => {
+  const participants = [];
+  try {
+  // get medal ref
+  const medalRef = db.collection('medals').doc(id);
+  // get questers ref
+  const questersSnapshot = await medalRef.collection('questers').get();
+  if (questersSnapshot.empty) {
+    return participants;
+  }
+
+  questersSnapshot.forEach(async (doc) => {
+    const participant = await getCreator(doc.data().address); // make image later
+    participants.push(participant);
+  });
+
+  return participants;
+  
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
 app.get("/checkUser/:address", async (req, res) => {
-  const address = req.params.address;  
+  const address = req.params.address;
   try {
     const users = db.collection('users');
     const userSnapshot = await users.where('address', '==', address).get();
