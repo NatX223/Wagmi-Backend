@@ -36,57 +36,6 @@ const db = getFirestore();
 const app = express();
 const port = process.env.PORT || 3300;
 
-// LUKSO provider
-const provider = 'https://rpc.testnet.lukso.network';
-
-// ethers
-const { Wallet, ethers, getAddress } = require("ethers");
-
-// initializing the LSP8 contract ABI
-const LSP8ABI = [
-  {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "tokenId",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bool",
-          "name": "force",
-          "type": "bool"
-        },
-        {
-          "internalType": "bytes",
-          "name": "data",
-          "type": "bytes"
-        }
-      ],
-      "name": "mint",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "transferOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-]
-
 // Enable CORS for any origin
 app.use(cors({
   origin: '*', // Allow requests from any origin
@@ -434,7 +383,25 @@ app.post("/createProfile", async (req, res) => {
   try {
     const users = db.collection('users');
     const docId = req.body.username;
+    const pfpRef = db.collection('pfps');
+    const pfpSnapshot = await pfpRef.get();
+    const numberOfDocuments = pfpSnapshot.size;
+    const randomIndex = Math.floor(Math.random() * numberOfDocuments);
+
+    let counter = 0;
+    let randomDocumentRef;
+    pfpSnapshot.forEach((doc) => {
+      if (counter === randomIndex) {
+        randomDocumentRef = doc.ref;
+      }
+      counter++;
+    });
+
+    const randomDocument = await randomDocumentRef.get();
+    const pfp = randomDocument.data().image;
+
     await users.doc(docId).set(profileData);
+    await users.doc(docId).update({ image: pfp });
     await users.doc(docId).collection("followers").add(wagmiFollow);
     await users.doc(docId).collection("following").add(wagmiFollow);
 
@@ -672,16 +639,18 @@ app.get("/getUserProfileAddress/:address", async (req, res) => {
             image: imageURL,
             verified: true,
             name: title,
-            headImg: badgeList.docs[i].data().image,
-            created: await getCreator(badgeList.docs[i].data().minter),
-            transacId: "0x", // store transaction id
-            desc: badgeList.docs[i].data().description,
-            time: {
-              start: badgeList.docs[i].data().startDate,
-              end: badgeList.docs[i].data().endDate
-            },
-            validator: badgeList.docs[i].data().validator,
-            rating: badgeList.docs[i].data().rating
+            info: {
+              headImg: badgeList.docs[i].data().image,
+              created: await getCreator(badgeList.docs[i].data().minter),
+              transacId: "0x", // store transaction id
+              desc: badgeList.docs[i].data().description,
+              time: {
+                start: badgeList.docs[i].data().startDate,
+                end: badgeList.docs[i].data().endDate
+              },
+              validator: badgeList.docs[i].data().validator,
+              rating: badgeList.docs[i].data().rating
+            }
           },
         };
         badges.push(badgeObj)
