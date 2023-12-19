@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const { CovalentClient, Chains } = require("@covalenthq/client-sdk");
 
 // Import Moralis
 const Moralis = require("moralis").default;
@@ -704,6 +705,8 @@ const getCreator = async(address) => {
 
 app.get("/getAllMedals", async (req, res) => {  
 
+  // const address = req.params.address;
+
   try {
     const medals = db.collection('medals');
     const allMedals = await medals.get();
@@ -722,6 +725,7 @@ app.get("/getAllMedals", async (req, res) => {
 
       const medalDetails = {};
       const value = {}
+      value.id = id;
       value.title = title;
       value.host = creator;
       value.metrics = type;
@@ -738,6 +742,17 @@ app.get("/getAllMedals", async (req, res) => {
       }
 
       value.participants = await getParticipants(i);
+
+      // var claimed;
+      // const questerRef = db.collection('medals').doc(`${i}`).collection(questers);
+      // const questerSnapshot = await questerRef.where('address', '==', address).get();
+      // if (questerSnapshot.empty) {
+      //   claimed = false;
+      // } else {
+      //   claimed = questerSnapshot.docs[0].data().claimed;
+      // }
+      
+      // value.claimed = claimed;
 
       medalDetails.id = id;
       medalDetails.value = value;
@@ -770,7 +785,7 @@ const getParticipants = async(id) => {
   }
 
   questersSnapshot.forEach(async (doc) => {
-    const participant = await getCreator(doc.data().address); // make image later
+    const participant = doc.data().image;
     participants.push(participant);
   });
 
@@ -986,6 +1001,17 @@ const getDonationAmount = async (address, _chain, doneeAddress) => {
       return error;
   }
 }
+
+app.get("/getBal", async(req, res) => {
+  const address = req.query.address;
+  const client = new CovalentClient('cqt_rQCdKfDmRwp9Fm6thMV6c69T8mkj');
+  const respWithEnum = await client.BalanceService.getTokenBalancesForWalletAddress(Chains.ETH_MAINNET, address);
+  if (!respWithEnum.error) {
+      console.log(respWithEnum.data);
+  } else {
+      console.log(respWithEnum.error_message);
+  }
+})
 
 const sumDonationAmount = (data, doneeAddress) => {
     // Initialize a variable to store the sum
