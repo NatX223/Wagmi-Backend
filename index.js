@@ -703,6 +703,16 @@ const getCreator = async(address) => {
   return username;
 }
 
+const getImage = async(address) => {
+  const users = db.collection('users');
+  const userSnapshot = await users.where('address', '==', address).get();
+
+  const userDoc = userSnapshot.docs[0].data();
+  const username = userDoc.image;
+
+  return username;
+}
+
 app.get("/getAllMedals", async (req, res) => {  
 
   // const address = req.params.address;
@@ -754,7 +764,7 @@ app.get("/getAllMedals", async (req, res) => {
       
       // value.claimed = claimed;
 
-      medalDetails.id = id;
+      // medalDetails.id = id;
       medalDetails.value = value;
 
       medalArray.push(medalDetails);
@@ -785,7 +795,7 @@ const getParticipants = async(id) => {
   }
 
   questersSnapshot.forEach(async (doc) => {
-    const participant = doc.data().image;
+    const participant = getImage(doc.data().address);
     participants.push(participant);
   });
 
