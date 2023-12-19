@@ -704,13 +704,18 @@ const getCreator = async(address) => {
 }
 
 const getImage = async(address) => {
-  const users = db.collection('users');
-  const userSnapshot = await users.where('address', '==', address).get();
-
-  const userDoc = userSnapshot.docs[0].data();
-  const username = userDoc.image;
-
-  return username;
+  try {
+    const users = db.collection('users');
+    const userSnapshot = await users.where('address', '==', address).get();
+  
+    const userDoc = userSnapshot.docs[0].data();
+    const image = userDoc.image;
+    console.log(image);
+  
+    return image;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 app.get("/getAllMedals", async (req, res) => {  
@@ -751,7 +756,8 @@ app.get("/getAllMedals", async (req, res) => {
         remaining: medal.data().remaining
       }
 
-      value.participants = await getParticipants(i);
+      value.participants = await getParticipants(`${i}`);
+      console.log(i);
 
       // var claimed;
       // const questerRef = db.collection('medals').doc(`${i}`).collection(questers);
@@ -764,7 +770,7 @@ app.get("/getAllMedals", async (req, res) => {
       
       // value.claimed = claimed;
 
-      // medalDetails.id = id;
+      medalDetails.id = id;
       medalDetails.value = value;
 
       medalArray.push(medalDetails);
@@ -795,7 +801,8 @@ const getParticipants = async(id) => {
   }
 
   questersSnapshot.forEach(async (doc) => {
-    const participant = getImage(doc.data().address);
+    const _participant = await getImage(doc.data().address);
+    const participant = _participant.toString();
     participants.push(participant);
   });
 
