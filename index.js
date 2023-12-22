@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const { CovalentClient, Chains } = require("@covalenthq/client-sdk");
+const { CovalentClient } = require("@covalenthq/client-sdk");
 
 // Import Moralis
 const Moralis = require("moralis").default;
@@ -12,9 +12,6 @@ const { EvmChain } = require("@moralisweb3/common-evm-utils");
 
 // Import dotenv to use environment variables
 require('dotenv').config();
-
-// initializing the needed LUKSO tools
-const { LSPFactory } = require('@lukso/lsp-factory.js');
 
 // initializing firebase
 const admin = require('firebase-admin');
@@ -30,7 +27,7 @@ initializeApp({
 });
 
 const bucket = getStorage().bucket();
-const storage = multer.memoryStorage(); 
+const storage = multer.memoryStorage();
 
 const db = getFirestore();
 
@@ -45,14 +42,15 @@ app.use(cors({
 
 app.use(express.json());
 
-const apiKey = process.env.MORALIS_API;
+const moralisApiKey = process.env.MORALIS_API;
+const covalentApiKey = process.env.COVALENT_API;
 
 const privateKey = process.env.privateKey;
 
 // Add this a startServer function that initialises Moralis
 const startServer = async () => {
     await Moralis.start({
-      apiKey: apiKey,
+      apiKey: moralisApiKey,
     });
   
     app.listen(port, "0.0.0.0", () => {
@@ -140,24 +138,18 @@ app.get("/getEligible/:tokenId", async (req, res) => {
       for (let i = 0; i < questers.length; i++) {
         const address = questers[i].address;
         var userAmount;
-        switch (type) {
-          case 0:
+
+          if (type == 0) {
             userAmount = await getCollectionAmount(address, chain, contractAddress);
             if (userAmount >= requirement) {
-              indecies.push(questers[i].index)
+              indecies.push(questers[i].index);
             }
-            break;
-            case 1:
-              userAmount = await getDonationAmount(address, chain, contractAddress);
-              if (userAmount >= requirement) {
-                indecies.push(questers[i].index)
-              }
-              break;
-        
-          default:
-            break;
-        }
-        
+          } else {
+            userAmount = await getTransactionAmount(address, chain, contractAddress);
+            if (userAmount >= requirement) {
+              indecies.push(questers[i].index);
+            }
+          }
       }
       const _index = Math.min(...indecies);
       console.log('index', _index);
@@ -183,40 +175,54 @@ app.get("/getEligible/:tokenId", async (req, res) => {
 
 // function to get the amount of NFTs of a collection an account has
 const getCollectionAmount = async (address, _chain, nftAddress) => {
+  if (_chain == "Viction") {
+    try {
+      const result = victionNftCheck(address);
+
+      const amount = AmountByAddress(result, nftAddress);
+      console.log(amount);
+      return amount;
+    
+      } catch (error) {
+          console.error(error);
+          return error;
+      }
+  } else {
+    var chain;
+    switch (_chain) {
+        case "Lukso":
+            chain = EvmChain.MUMBAI;
+            break;
+        case "Eth Sepolia":
+            chain = EvmChain.SEPOLIA;
+            break;
+        case "Polygon Mumbai":
+            chain = EvmChain.MUMBAI;
+            break;
+        case "BSC Testnet":
+            chain = EvmChain.BSC_TESTNET;
+            break;
+        default:
+            chain = EvmChain.MUMBAI;
+    }
+  
+    // check moralis API on how to get the name of an NFT collection fromt the contract address
+    try {
+    const response = await Moralis.EvmApi.nft.getWalletNFTs({
+        address,
+        chain
+    });
+  
+    const amount = sumAmountByAddress(response.raw.result, nftAddress);
+    console.log(amount);
+    return amount;
+  
+    } catch (error) {
+        console.error(error);
+        return error;
+    }
+  }
   // const address = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
-  var chain;
-  switch (_chain) {
-      case "Lukso":
-          chain = EvmChain.MUMBAI;
-          break;
-      case "Eth Sepolia":
-          chain = EvmChain.SEPOLIA;
-          break;
-      case "Polygon Mumbai":
-          chain = EvmChain.MUMBAI;
-          break;
-      case "BSC Testnet":
-          chain = EvmChain.BSC_TESTNET;
-          break;
-      default:
-          chain = EvmChain.MUMBAI;
-  }
-
-  // check moralis API on how to get the name of an NFT collection fromt the contract address
-  try {
-  const response = await Moralis.EvmApi.nft.getWalletNFTs({
-      address,
-      chain
-  });
-
-  const amount = sumAmountByAddress(response.raw.result, nftAddress);
-  console.log(amount);
-  return amount;
-
-  } catch (error) {
-      console.error(error);
-      return error;
-  }
 }
 
 const sumAmountByAddress = (data, address) => {
@@ -234,25 +240,20 @@ const sumAmountByAddress = (data, address) => {
   return sum;
 }
 
-app.get("/getDonationAmount", async (req, res) => {
-    const userAddress = req.query.userAddress;
-    const doneeAddress = req.query.doneeAddress;
-    const chain = req.query.chain;
+const AmountByAddress = (data, address) => {
+  // Filter the array to include only objects with the specified 'name'
+  console.log('data', data);
+  const add = Number(address);
+  const filteredData = data.filter((item) => item.contract_address == add);
+  console.log('address', add);
+  console.log('filtered data', filteredData);
 
-    try {
-      // Get and return the crypto data
-      const data = await getDonationAmount(userAddress, chain, doneeAddress);
-      const jsonResponse = { RESULT: data };
-      res.json(jsonResponse);
-      res.status(200);
-      res.json(jsonResponse);
-    } catch (error) {
-      // Handle errors
-      console.error(error);
-      res.status(500);
-      res.json({ error: error.message });
-    }
-});
+  // Sum the 'amount' values in the filtered array
+  const sum = filteredData.reduce((total, item) => total + Number(item.balance), 0);
+
+  console.log('sum', sum);
+  return sum;
+}
 
 app.get("/addBadge", async (req, res) => {
   try {
@@ -985,58 +986,73 @@ app.put("/updateBadgeAddress/:orgAddress", async(req, res) => {
 // endpoint to store the address
 // endpoint to get badge details
 
-const getDonationAmount = async (address, _chain, doneeAddress) => {
-  // const address = "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+const getTransactionAmount = async () => {
+  const address = "0x68360457a590318778fC346CDe64E327Dc6A5C0a";
+  const _chain = "Viction";
+  const contractAddress = "0xdef1c0ded9bec7f1a1670819833240f027b25eff";
+
   var chain;
   switch (_chain) {
-      case "Polygon":
-          chain = EvmChain.POLYGON;
-          break;
-      case "BSC":
-          chain = EvmChain.BSC;
-          break;
-      case "Arbitrum":
-          chain = EvmChain.ARBITRUM;
-          break;
-      default:
-          chain = EvmChain.ETHEREUM;
+    case "Viction":
+      chain = "tomochain-testnet";
+      break;
+  case "Eth Sepolia":
+      chain = "eth-sepolia";
+      break;
+  case "Polygon Mumbai":
+      chain = "matic-mumbai";
+      break;
+  case "BSC Testnet":
+      chain = "bsc-testnet";
+      break;
+  default:
+      chain = "tomochain-testnet";
   }
 
-  // check moralis API on how to get the name of an NFT collection fromt the contract address
   try {
-    const response = await Moralis.EvmApi.transaction.getWalletTransactions({
-      address,
-      chain,
-    });
+    const client = new CovalentClient(covalentApiKey);
 
-  const amount = sumDonationAmount(response.raw.result, doneeAddress);
-  console.log(amount);
-  return amount;
-
+    for await (const request of client.TransactionService.getAllTransactionsForAddress(chain, address)) {
+      if (!request.error) {
+        console.log(request.data.items);
+        const amount = sumTransactionAmount(request.data.items, contractAddress);
+        console.log(amount);
+        return amount;
+    } else {
+        console.log(request.error_message);
+    }
+  }
   } catch (error) {
-      console.error(error);
-      return error;
+    console.log(error);
+  }
+
+}
+
+const victionNftCheck = async(address) => {
+  try {
+    const client = new CovalentClient(covalentApiKey);
+    const queryParamOpts = {
+      withUncached: true,
+    };
+    const request = await client.NftService.getNftsForAddress("tomochain-testnet", address, queryParamOpts);
+    if (!request.error) {
+        console.log(request.data.items);
+        return request.data.items;
+    } else {
+        console.log(request.error_message);
+    }
+  } catch (error) {
+    console.log(error);
   }
 }
 
-app.get("/getBal", async(req, res) => {
-  const address = req.query.address;
-  const client = new CovalentClient('cqt_rQCdKfDmRwp9Fm6thMV6c69T8mkj');
-  const respWithEnum = await client.BalanceService.getTokenBalancesForWalletAddress(Chains.ETH_MAINNET, address);
-  if (!respWithEnum.error) {
-      console.log(respWithEnum.data);
-  } else {
-      console.log(respWithEnum.error_message);
-  }
-})
-
-const sumDonationAmount = (data, doneeAddress) => {
+const sumTransactionAmount = (data, contractAddress) => {
     // Initialize a variable to store the sum
     let totalValue = 0;
 
     // Iterate through the "result" array and sum the "value" where "to_address" matches the specific address
     data.result.forEach(result => {
-      if (result.to_address === doneeAddress) {
+      if (result.to_address === contractAddress) {
         totalValue += Number(result.value);
       }
     });
