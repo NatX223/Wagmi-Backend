@@ -153,24 +153,86 @@ app.get("/getEligible/:tokenId", async (req, res) => {
       }
       const _index = Math.min(...indecies);
       console.log('index', _index);
-      // const index = _index.toString();
       const foundObject = questers.find(item => item.index === _index);
       const id = foundObject.id;
       const userAddress = foundObject.address;
       const qref = questersRef.doc(id);
       await qref.update({claimed: true});
-      // const _minters = db.collection('medals').doc(tokenId).get();
-      // const minters = await _minters.data().minters;
       await db.collection('medals').doc(tokenId).update({ minters: FieldValue.arrayUnion(userAddress) })
       const response = { index: _index };
-      res.status(200).json(response)
-      // res.status(200).json({ 1: name, 2: chain, 3: type, 4: requirement, 5: indecies, 6: questers, 7: index });
+      res.status(200).json(response);
     } catch (error) {
       // Handle errors
       console.error(error);
       res.status(500);
       res.json({ error: error.message });
     }
+});
+
+app.get("/getEligibleArray/:tokenId", async (req, res) => {
+  // get the chain and contractAddress from the requset/query
+  const tokenId = req.params.tokenId;
+  //get the needed params - useraddress, chain, nftname/contract address, requirement
+  const medalRef = await db.collection('medals').doc(tokenId).get();
+  const medalDoc = medalRef.data();
+  const contractAddress = medalDoc.contractAddress;
+  const chain = medalDoc.chain;
+  const type = medalDoc.type;
+  const requirement = medalDoc.requirement; 
+  let indecies = [];
+  let questers = [];
+  let eligible = [];
+
+  try {
+    // get all questers
+    const questersRef = db.collection('medals').doc(tokenId).collection('questers');
+    const questerssnapshot = await questersRef.get();
+    questerssnapshot.forEach(doc => {
+      const userObj = {address: doc.data().address, index: doc.data().index, id: doc.id}
+      if (doc.data().claimed == false) {
+        questers.push(userObj);
+      }
+    });
+    console.log('questers', questers);
+    // loop through all questers and check if the are eligible
+    for (let i = 0; i < questers.length; i++) {
+      const address = questers[i].address;
+      var userAmount;
+
+        if (type == 0) {
+          userAmount = await getCollectionAmount(address, chain, contractAddress);
+          if (userAmount >= requirement) {
+            indecies.push(questers[i].index);
+          }
+        } else {
+          userAmount = await getTransactionAmount(address, chain, contractAddress);
+          if (userAmount >= requirement) {
+            indecies.push(questers[i].index);
+          }
+        }
+    }
+
+    for (let i = 0; i < indecies.length; i++) {
+      const _index = indecies[i];
+      console.log('index', _index);
+      const foundObject = questers.find(item => item.index === _index);
+      const id = foundObject.id;
+      const userAddress = foundObject.address;
+      const qref = questersRef.doc(id);
+      const qDoc = await qref.get();
+      const address = qDoc.data().address;
+      eligible.push(address);
+      await qref.update({claimed: true});
+      await db.collection('medals').doc(tokenId).update({ minters: FieldValue.arrayUnion(userAddress) })
+    }
+    const response = { eligible: eligible };
+    res.status(200).json(response);
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500);
+    res.json({ error: error.message });
+  }
 });
 
 // function to get the amount of NFTs of a collection an account has
@@ -719,9 +781,9 @@ const getImage = async(address) => {
   }
 }
 
-app.get("/getAllMedals", async (req, res) => {  
+app.get("/getAllMedals/:address", async (req, res) => {  
 
-  // const address = req.params.address;
+  const address = req.params.address;
 
   try {
     const medals = db.collection('medals');
@@ -760,16 +822,16 @@ app.get("/getAllMedals", async (req, res) => {
       value.participants = await getParticipants(`${i}`);
       console.log(i);
 
-      // var claimed;
-      // const questerRef = db.collection('medals').doc(`${i}`).collection(questers);
-      // const questerSnapshot = await questerRef.where('address', '==', address).get();
-      // if (questerSnapshot.empty) {
-      //   claimed = false;
-      // } else {
-      //   claimed = questerSnapshot.docs[0].data().claimed;
-      // }
+      var claimed;
+      const questerRef = db.collection('medals').doc(`${i}`).collection('questers');
+      const questerSnapshot = await questerRef.where('address', '==', address).get();
+      if (questerSnapshot.empty) {
+        claimed = false;
+      } else {
+        claimed = questerSnapshot.docs[0].data().claimed;
+      }
       
-      // value.claimed = claimed;
+      value.claimed = claimed;
 
       medalDetails.id = id;
       medalDetails.value = value;
