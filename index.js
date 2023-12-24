@@ -819,7 +819,9 @@ app.get("/getAllMedals/:address", async (req, res) => {
         remaining: medal.data().remaining
       }
 
-      value.participants = await getParticipants(`${i}`);
+      const participantObject = await getParticipants(`${i}`, address);
+      value.participants = participantObject.participants;
+      value.participant = participantObject.isParticipant; 
       console.log(i);
 
       var claimed;
@@ -855,24 +857,31 @@ app.get("/getAllMedals/:address", async (req, res) => {
 
 })
 
-const getParticipants = async(id) => {
+const getParticipants = async(id, address) => {
   const participants = [];
+  var isParticipant;
   try {
   // get medal ref
   const medalRef = db.collection('medals').doc(`${id}`);
   // get questers ref
   const questersSnapshot = await medalRef.collection('questers').get();
   if (questersSnapshot.empty) {
-    return participants;
+    isParticipant = false;
+    return { participants, isParticipant };
   }
 
   questersSnapshot.forEach(async (doc) => {
     const _participant = await getImage(doc.data().address);
+    if (doc.data().address == address) {
+      isParticipant = true;
+    } else {
+      isParticipant = false;
+    }
     const participant = _participant.toString();
     participants.push(participant);
   });
 
-  return participants;
+  return { participants, isParticipant };
   
   } catch (error) {
     console.log(error);
