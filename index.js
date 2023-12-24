@@ -830,8 +830,11 @@ app.get("/getAllMedals/:address", async (req, res) => {
       } else {
         claimed = questerSnapshot.docs[0].data().claimed;
       }
+
+      const _isCreator = await isCreator(`${i}`, address);
       
       value.claimed = claimed;
+      value.creator = _isCreator;
 
       medalDetails.id = id;
       medalDetails.value = value;
@@ -875,6 +878,28 @@ const getParticipants = async(id) => {
     console.log(error);
   }
 
+}
+
+const isCreator = async(id, address) => {
+  try {
+    const medalRef = db.collection('medals').doc(`${id}`);
+    const medalDoc = await medalRef.get();
+    if (!medalDoc.exists) {
+      return false;
+    }
+    const creator = medalDoc.data().creator;
+
+    if (creator == address) {
+      return true;
+    }
+
+    else {
+      return false;
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 app.get("/checkUser/:address", async (req, res) => {
