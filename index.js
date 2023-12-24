@@ -821,7 +821,7 @@ app.get("/getAllMedals/:address", async (req, res) => {
 
       const participantObject = await getParticipants(`${i}`, address);
       value.participants = participantObject.participants;
-      value.participant = participantObject.isParticipant; 
+      value.isParticipant = participantObject.isParticipant; 
       console.log(i);
 
       var claimed;
@@ -836,7 +836,7 @@ app.get("/getAllMedals/:address", async (req, res) => {
       const _isCreator = await isCreator(`${i}`, address);
       
       value.claimed = claimed;
-      value.creator = _isCreator;
+      value.isCreator = _isCreator;
 
       medalDetails.id = id;
       medalDetails.value = value;
