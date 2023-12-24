@@ -187,6 +187,11 @@ app.get("/getEligibleArray/:tokenId", async (req, res) => {
     // get all questers
     const questersRef = db.collection('medals').doc(tokenId).collection('questers');
     const questerssnapshot = await questersRef.get();
+    if (questerssnapshot.empty) {
+      const response = { eligible: eligible };
+      res.status(200).json(response);
+    }
+
     questerssnapshot.forEach(doc => {
       const userObj = {address: doc.data().address, index: doc.data().index, id: doc.id}
       if (doc.data().claimed == false) {
