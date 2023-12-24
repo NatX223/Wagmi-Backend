@@ -821,8 +821,7 @@ app.get("/getAllMedals/:address", async (req, res) => {
 
       const participantObject = await getParticipants(`${i}`, address);
       value.participants = participantObject.participants;
-      value.isParticipant = participantObject.isParticipant; 
-      console.log(i);
+      value.isParticipant = participantObject.isParticipant;
 
       var claimed;
       const questerRef = db.collection('medals').doc(`${i}`).collection('questers');
