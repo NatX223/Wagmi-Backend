@@ -804,7 +804,7 @@ app.get("/getAllMedals/:address", async (req, res) => {
       const id = i;
       const _creator = medal.data().creator;
       const creator = await getCreator(_creator);
-      const description = `This is a badge for ${creator}`;
+      const description = medal.data().addtionalInfo;
 
       const medalDetails = {};
       const value = {}
@@ -812,7 +812,7 @@ app.get("/getAllMedals/:address", async (req, res) => {
       value.title = title;
       value.host = creator;
       value.metrics = type;
-      value.hostImage = image;
+      value.hostImage = await getImage(_creator);
       value.medalImage = image;
       value.description = description;
       value.time = {
